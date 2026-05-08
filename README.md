@@ -1,75 +1,128 @@
+# 🛒 QueryKart AI: Talk to Your Retail Database
 
-# AtliQ Tees: Talk to a Database  
+QueryKart AI is an end-to-end Generative AI project that allows users to interact with a retail MySQL database using natural language.
 
-This is an end to end LLM project based on Google Palm and Langchain. We are building a system that can talk to MySQL database. 
-User asks questions in a natural language and the system generates answers by converting those questions to an SQL query and
-then executing that query on MySQL database. 
-AtliQ Tees is a T-shirt store where they maintain their inventory, sales and discounts data in MySQL database. A store manager 
-will may ask questions such as,
-- How many white color Adidas t shirts do we have left in the stock?
-- How much sales our store will generate if we can sell all extra-small size t shirts after applying discounts?
-The system is intelligent enough to generate accurate queries for given question and execute them on MySQL database
+The system converts English questions into SQL queries using Large Language Models (LLMs), executes them on the database, and returns accurate business insights in real time.
 
-![](atliq_tees.png)
+Users can ask questions related to:
 
-## Project Highlights
+* Sales
+* Inventory
+* Customers
+* Revenue
+* Payments
+* Orders
+* Product Analytics
 
-- AtliQ Tees is a t shirt store that sells Adidas, Nike, Van Heusen and Levi's t shirts 
-- Their inventory, sales and discounts data is stored in a MySQL database
-- We will build an LLM based question and answer system that will use following,
-  - Google Palm LLM
-  - Hugging face embeddings
-  - Streamlit for UI
-  - Langchain framework
-  - Chromadb as a vector store
-  - Few shot learning
-- In the UI, store manager will ask questions in a natural language and it will produce the answers
+without writing SQL manually.
 
+---
 
-## Installation
+# 🚀 Project Highlights
 
-1.Clone this repository to your local machine using:
+* QueryKart AI is an AI-powered retail database assistant
+* Retail data is stored in a MySQL database
+* Users can ask questions in natural language
+* The system automatically generates SQL queries
+* Queries are executed on the database in real time
+* Supports business analytics and database intelligence
+
+---
+
+# 🧠 Technologies Used
+
+* Groq Llama 3.3 70B
+* Python
+* LangChain
+* Streamlit
+* SQLAlchemy
+* MySQL
+* Few Shot Learning
+* Prompt Engineering
+
+---
+
+# 💡 Sample Questions
+
+* Which category sells the most products?
+* Which brand generates highest revenue?
+* Show top 5 customers by total spending
+* Which products have lowest stock quantity?
+* Which payment method is used most frequently?
+* What is total inventory value?
+* Which city generates highest revenue?
+
+---
+
+# ⚙️ Installation
+
+## 1. Clone Repository
 
 ```bash
-  git clone https://github.com/codebasics/langchain.git
+git clone https://github.com/takyash7/QueryKart-AI---Gen-AI-Project.git
 ```
-2.Navigate to the project directory:
+
+---
+
+## 2. Navigate to Project Folder
 
 ```bash
-  cd 4_sqldb_tshirts
+cd QueryKartAI
 ```
-3. Install the required dependencies using pip:
+
+---
+
+## 3. Install Dependencies
 
 ```bash
-  pip install -r requirements.txt
+pip install -r requirements.txt
 ```
-4.Acquire an api key through makersuite.google.com and put it in .env file
+
+---
+
+## 4. Configure Environment Variables
+
+Create `.env` file:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+
+MYSQLHOST=your_host
+MYSQLPORT=your_port
+MYSQLUSER=your_user
+MYSQLPASSWORD=your_password
+MYSQLDATABASE=your_database
+```
+
+---
+
+# ▶️ Run Project
 
 ```bash
-  GOOGLE_API_KEY="your_api_key_here"
-```
-5. For database setup, run database/db_creation_atliq_t_shirts.sql in your MySQL workbench
-
-## Usage
-
-1. Run the Streamlit app by executing:
-```bash
-streamlit run main.py
-
+streamlit run app.py
 ```
 
-2.The web app will open in your browser where you can ask questions
+---
 
-## Sample Questions
-  - How many total t shirts are left in total in stock?
-  - How many t-shirts do we have left for Nike in XS size and white color?
-  - How much is the total price of the inventory for all S-size t-shirts?
-  - How much sales amount will be generated if we sell all small size adidas shirts today after discounts?
-  
-## Project Structure
+# 📂 Project Structure
 
-- main.py: The main Streamlit application script.
-- langchain_helper.py: This has all the langchain code
-- requirements.txt: A list of required Python packages for the project.
-- few_shots.py: Contains few shot prompts
-- .env: Configuration file for storing your Google API key.
+* `app.py` → Landing page
+* `langchain_helper.py` → AI query generation logic
+* `few_shots.py` → Few-shot training examples
+* `requirements.txt` → Required packages
+* `database/schema.sql` → Database schema
+* `database/generate_data.py` → Dataset generation script
+* `database/database.sql` → Full database export
+* `pages/` → Multi-page Streamlit UI
+
+---
+
+# 🎯 Project Objective
+
+The objective of QueryKart AI is to simplify database interaction using Generative AI and enable users to retrieve business insights using natural language queries.
+
+---
+
+# 👨‍💻 Developer
+
+Created by Yash Tak
