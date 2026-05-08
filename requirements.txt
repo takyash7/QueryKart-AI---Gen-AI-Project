@@ -10,3 +10,4 @@ pymysql
 mysql-connector-python
 faiss-cpu
 tiktoken
+langchain-groq
