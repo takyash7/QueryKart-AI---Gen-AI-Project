@@ -6,6 +6,17 @@ from sqlalchemy import text
 
 from langchain_groq import ChatGroq
 
+from langchain_core.prompts import (
+    PromptTemplate,
+    FewShotPromptTemplate
+)
+
+from validator import validate_sql_query
+
+from few_shots import few_shots
+
+from retriever import retriever
+
 # ==========================================
 # LOAD ENV
 # ==========================================
@@ -29,6 +40,7 @@ DB_NAME = os.getenv("MYSQLDATABASE")
 engine = create_engine(
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
+
 # ==========================================
 # GROQ MODEL
 # ==========================================
@@ -43,12 +55,38 @@ llm = ChatGroq(
 )
 
 # ==========================================
-# MAIN FUNCTION
+# FEW SHOT FORMAT
 # ==========================================
 
-def run_query(question):
+example_prompt = PromptTemplate(
 
-    prompt = f"""
+    input_variables=[
+        "Question",
+        "SQLQuery"
+    ],
+
+    template="""
+
+Question:
+{Question}
+
+SQL Query:
+{SQLQuery}
+
+"""
+)
+
+# ==========================================
+# MAIN PROMPT TEMPLATE
+# ==========================================
+
+few_shot_prompt = FewShotPromptTemplate(
+
+    examples=few_shots,
+
+    example_prompt=example_prompt,
+
+    prefix="""
 
 You are an expert MySQL assistant.
 
@@ -65,159 +103,86 @@ STRICT RULES:
 - Never hallucinate columns
 - Use ONLY schema provided below
 - Use proper JOIN relationships
+- Never generate dangerous SQL queries
 
 ==================================================
-DATABASE SCHEMA
+DATABASE CONTEXT
 ==================================================
 
-Table: brands
-Columns:
-- brand_id
-- brand_name
-
-Table: categories
-Columns:
-- category_id
-- category_name
-
-Table: products
-Columns:
-- product_id
-- product_name
-- brand_id
-- category_id
-- description
-- launch_date
-
-Table: product_variants
-Columns:
-- variant_id
-- product_id
-- size
-- color
-- price
-
-Table: inventory
-Columns:
-- inventory_id
-- variant_id
-- stock_quantity
-- warehouse_location
-- last_updated
-
-Table: discounts
-Columns:
-- discount_id
-- variant_id
-- discount_percent
-- start_date
-- end_date
-
-Table: customers
-Columns:
-- customer_id
-- first_name
-- last_name
-- gender
-- email
-- city
-- state
-- country
-- registration_date
-
-Table: orders
-Columns:
-- order_id
-- customer_id
-- order_date
-- total_amount
-- order_status
-
-Table: order_items
-Columns:
-- order_item_id
-- order_id
-- variant_id
-- quantity
-- item_price
-
-Table: payments
-Columns:
-- payment_id
-- order_id
-- payment_method
-- payment_status
-- payment_date
-
-Table: suppliers
-Columns:
-- supplier_id
-- supplier_name
-- contact_email
-- city
-- country
-
-Table: product_suppliers
-Columns:
-- product_supplier_id
-- product_id
-- supplier_id
-
-==================================================
-TABLE RELATIONSHIPS
-==================================================
-
-products.brand_id = brands.brand_id
-
-products.category_id = categories.category_id
-
-product_variants.product_id = products.product_id
-
-inventory.variant_id = product_variants.variant_id
-
-discounts.variant_id = product_variants.variant_id
-
-orders.customer_id = customers.customer_id
-
-order_items.order_id = orders.order_id
-
-order_items.variant_id = product_variants.variant_id
-
-payments.order_id = orders.order_id
-
-product_suppliers.product_id = products.product_id
-
-product_suppliers.supplier_id = suppliers.supplier_id
+{retrieved_context}
 
 ==================================================
 IMPORTANT JOIN RULES
 ==================================================
 
-order_items.variant_id joins with product_variants.variant_id
+- order_items.variant_id joins product_variants.variant_id
 
-product_variants.product_id joins with products.product_id
+- product_variants.product_id joins products.product_id
 
-Never join order_items directly with products
+- Never join order_items directly with products
 
 ==================================================
 
+Below are some example questions and SQL queries.
+
+""",
+
+    suffix="""
+
 Question:
-{question}
+{input}
 
 SQL Query:
 
-"""
+""",
+
+    input_variables=[
+        "input",
+        "retrieved_context"
+    ]
+)
+
+# ==========================================
+# MAIN FUNCTION
+# ==========================================
+
+def run_query(question):
+
+    # ==========================================
+    # RETRIEVE RELEVANT SCHEMA CONTEXT
+    # ==========================================
+
+    retrieved_docs = retriever.invoke(question)
+
+    retrieved_context = "\n\n".join(
+
+        [
+            doc.page_content
+            for doc in retrieved_docs
+        ]
+    )
+
+    # ==========================================
+    # GENERATE FINAL PROMPT
+    # ==========================================
+
+    final_prompt = few_shot_prompt.format(
+
+        input=question,
+
+        retrieved_context=retrieved_context
+    )
 
     # ==========================================
     # GENERATE SQL
     # ==========================================
 
-    response = llm.invoke(prompt)
+    response = llm.invoke(final_prompt)
 
     sql_query = response.content.strip()
 
     # ==========================================
-    # CLEAN OUTPUT
+    # CLEAN SQL OUTPUT
     # ==========================================
 
     sql_query = sql_query.replace(
@@ -233,22 +198,48 @@ SQL Query:
     sql_query = sql_query.strip()
 
     # ==========================================
+    # VALIDATE SQL
+    # ==========================================
+
+    if not validate_sql_query(sql_query):
+
+        return {
+
+            "query": sql_query,
+
+            "result": "❌ Dangerous SQL query blocked."
+        }
+
+    # ==========================================
     # EXECUTE QUERY
     # ==========================================
 
-    with engine.connect() as connection:
+    try:
 
-        result = connection.execute(
-            text(sql_query)
-        )
+        with engine.connect() as connection:
 
-        rows = result.fetchall()
+            result = connection.execute(
+                text(sql_query)
+            )
+
+            rows = result.fetchall()
+
+        return {
+
+            "query": sql_query,
+
+            "result": rows
+        }
 
     # ==========================================
-    # RETURN RESULT
+    # HANDLE ERRORS
     # ==========================================
 
-    return {
-        "query": sql_query,
-        "result": rows
-    }
+    except Exception as e:
+
+        return {
+
+            "query": sql_query,
+
+            "result": f"❌ SQL Error: {str(e)}"
+        }
