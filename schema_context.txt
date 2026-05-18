@@ -1,0 +1,271 @@
+DATABASE SCHEMA
+
+Table: brands
+Columns:
+- brand_id
+- brand_name
+
+--------------------------------------------------
+
+Table: categories
+Columns:
+- category_id
+- category_name
+
+--------------------------------------------------
+
+Table: products
+Columns:
+- product_id
+- product_name
+- brand_id
+- category_id
+- description
+- launch_date
+
+--------------------------------------------------
+
+Table: product_variants
+Columns:
+- variant_id
+- product_id
+- size
+- color
+- price
+
+IMPORTANT:
+Primary Key = variant_id
+
+--------------------------------------------------
+
+Table: inventory
+Columns:
+- inventory_id
+- variant_id
+- stock_quantity
+- warehouse_location
+- last_updated
+
+--------------------------------------------------
+
+Table: discounts
+Columns:
+- discount_id
+- variant_id
+- discount_percent
+- start_date
+- end_date
+
+--------------------------------------------------
+
+Table: customers
+
+Columns:
+- customer_id
+- first_name
+- last_name
+- gender
+- email
+- city
+- state
+- country
+- registration_date
+
+IMPORTANT:
+- There is NO customer_name column
+- Use first_name and last_name
+- Full customer name:
+  CONCAT(first_name, ' ', last_name)
+
+--------------------------------------------------
+
+Table: orders
+Columns:
+- order_id
+- customer_id
+- order_date
+- total_amount
+- order_status
+
+--------------------------------------------------
+
+Table: order_items
+Columns:
+- order_item_id
+- order_id
+- variant_id
+- quantity
+- item_price
+
+IMPORTANT:
+Use variant_id only.
+Never use product_variant_id.
+
+--------------------------------------------------
+
+Table: payments
+Columns:
+- payment_id
+- order_id
+- payment_method
+- payment_status
+- payment_date
+
+--------------------------------------------------
+
+Table: suppliers
+Columns:
+- supplier_id
+- supplier_name
+- contact_email
+- city
+- country
+
+--------------------------------------------------
+
+Table: product_suppliers
+Columns:
+- product_supplier_id
+- product_id
+- supplier_id
+
+--------------------------------------------------
+
+IMPORTANT RELATIONSHIPS
+
+products.brand_id = brands.brand_id
+
+products.category_id = categories.category_id
+
+product_variants.product_id = products.product_id
+
+inventory.variant_id = product_variants.variant_id
+
+discounts.variant_id = product_variants.variant_id
+
+orders.customer_id = customers.customer_id
+
+order_items.order_id = orders.order_id
+
+order_items.variant_id = product_variants.variant_id
+
+payments.order_id = orders.order_id
+
+product_suppliers.product_id = products.product_id
+
+product_suppliers.supplier_id = suppliers.supplier_id
+
+--------------------------------------------------
+
+VERY IMPORTANT SQL RULES
+
+- Never use product_variant_id
+- Correct column is variant_id
+- Never hallucinate columns
+- Use exact schema columns only
+- Never join order_items directly with products
+- customers table does not contain customer_name
+- Use CONCAT(first_name, ' ', last_name)
+- customers table does not contain customer_name
+- Use CONCAT(first_name, ' ', last_name)
+
+- order_items table does not contain product_variant_id
+- Correct column is variant_id
+
+- product_variants table primary key is variant_id
+- Never use product_variant_id
+
+- products table does not contain stock_quantity
+- Stock quantity exists in inventory table
+
+- products table does not contain price
+- Price exists in product_variants table
+
+- orders table does not contain payment_method
+- Payment data exists in payments table
+
+- orders table does not contain quantity
+- Quantity exists in order_items table
+
+- customers table does not contain total_spending
+- Calculate spending using SUM(orders.total_amount)
+
+- products table does not contain category_name
+- category_name exists in categories table
+
+- products table does not contain brand_name
+- brand_name exists in brands table
+
+- inventory table does not contain product_id
+- inventory joins product_variants using variant_id
+
+- Never join orders directly with products
+- orders joins order_items first
+
+- Never join order_items directly with products
+- order_items joins product_variants first
+
+- Use CONCAT(first_name, ' ', last_name) for customer full name
+
+- Revenue calculation:
+  quantity * item_price
+
+- Use item_price from order_items table
+
+- product_variants contains:
+  size, color, price
+
+- discounts table contains discount_percent
+- Never use discount column
+
+- payments table contains payment_status
+- Never use status column
+
+- orders table contains order_status
+- Never use status column for orders
+
+- customers table does not contain phone_number
+
+- suppliers table does not contain supplier_phone
+
+- products table does not contain sales_amount
+- Calculate using order_items
+
+- orders table does not contain city
+- Customer city exists in customers table
+
+- product_variants table does not contain stock_quantity
+- stock_quantity exists in inventory table
+
+- inventory analysis requires inventory table
+
+- Revenue by category requires:
+  categories → products → product_variants → order_items
+
+- Revenue by brand requires:
+  brands → products → product_variants → order_items
+--------------------------------------------------
+
+Business Rules
+
+- Never join order_items directly with products.
+- order_items must join product_variants first.
+- Revenue = quantity * selling_price
+- Stock analysis uses product_variants.stock_quantity
+- Product category analytics uses categories table.
+- Brand analytics uses brands table.
+- Customer analytics uses customers and orders tables.
+- Payment analytics uses payments table.
+
+--------------------------------------------------
+
+Common Analytics Questions
+
+- Top selling products
+- Revenue by category
+- Revenue by brand
+- Most active customers
+- Low stock products
+- Payment method analysis
+- Monthly sales trends
+- Best performing product variants
